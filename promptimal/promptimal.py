@@ -2,6 +2,8 @@
 import os
 import argparse
 import subprocess
+import sys
+from pathlib import Path
 from typing import Optional, Tuple
 
 # Local
@@ -45,9 +47,23 @@ def generate_evaluator(evaluator_path: Optional[str]) -> Optional[callable]:
 ######
 
 
-def main():
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    sheet_commands = {"workbench", "validate", "test", "export", "capabilities"}
+    if argv and argv[0] in sheet_commands:
+        from promptimal.cli import main as sheet_main
+
+        return sheet_main(argv)
+    if argv and not argv[0].startswith("-") and Path(argv[0]).suffix.lower() == ".json":
+        from promptimal.cli import main as sheet_main
+
+        return sheet_main(["workbench"] + argv)
+
     parser = argparse.ArgumentParser(
-        description="Optimize your prompts using a genetic algorithm."
+        description=(
+            "Open a prompt sheet with 'promptimal workbench SHEET.json', or use "
+            "the legacy single-prompt optimizer options below."
+        )
     )
     parser.add_argument(
         "--prompt",
@@ -105,12 +121,12 @@ def main():
         type=str,
         help="Path to your custom evaluator script.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     api_key = args.openrouter_api_key or os.getenv("OPENROUTER_API_KEY")
     if not api_key:
         print("\033[1;31mOpenRouter API key not found.\033[0m")
-        return
+        return 2
 
     init_prompt = (
         input("\033[1;90mInitial prompt (use \\n for newlines):\033[0m\n\n")
@@ -146,3 +162,4 @@ def main():
         )
     else:
         print(f"\n\033[1;31mOptimization loop terminated.\033[0m")
+    return 0

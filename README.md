@@ -1,8 +1,15 @@
 # promptimal
 
-**CLI for quickly improving your AI prompts through OpenRouter. No dataset needed.**
+**Refine and verify reusable prompts against real behavior across an OpenRouter model matrix.**
 
-Just submit your prompt and a description of what you want to improve. Promptimal will then use a genetic algorithm to iteratively refine the prompt until it's better than the original. An LLM evaluates the modified prompts to guide the process, but you can also define your own evaluation function.
+Promptimal's prompt-sheet workbench keeps intent, test cases, intended responses,
+output contracts, requirements, prompt revisions, actual model responses, and
+finalization decisions in one machine-readable JSON file. You can edit manually,
+run repeated cross-model tests, inspect every response, optionally breed candidate
+templates from observed failures, and explicitly choose the revision that downstream
+tools should use.
+
+The original single-prompt optimizer remains available for compatibility.
 
 ![Demo](./assets/demo.gif)
 
@@ -25,7 +32,75 @@ Promptimal uses `openai/gpt-4o` by default. Set another OpenRouter model slug wi
 > export OPENROUTER_MODEL="openai/gpt-4o"
 ```
 
-## Quickstart
+## Prompt-sheet quickstart
+
+Start with [the example prompt sheet](./examples/prompt-sheet.example.json), or
+produce a sheet from a written specification using
+[the bundled schema](./promptimal/sheet/prompt-sheet.schema.json). Validate it
+before opening the workbench:
+
+```bash
+promptimal validate prompt-sheet.json
+promptimal workbench prompt-sheet.json
+```
+
+The TUI exposes prompt navigation, manual template editing and live expansion,
+execution-profile configuration, repeated tests, raw response and failure
+inspection, revision history, optional behavioral evolution, candidate adoption,
+and explicit finalization. Opening a JSON file directly is shorthand for the
+workbench command:
+
+```bash
+promptimal prompt-sheet.json
+```
+
+You can also run a test matrix without the TUI:
+
+```bash
+promptimal test prompt-sheet.json \
+  --prompt namespace.aliases \
+  --profile frontier-core \
+  --runs 5
+```
+
+Each enabled target receives only its configured model, messages, inference
+parameters, and provider-routing object. Promptimal does not infer structured
+output settings or add sampling parameters. Transport retries, returned model and
+provider metadata, raw output, usage, cost, latency, deterministic checks, and
+evaluation provenance are retained in the sheet.
+
+After reviewing a prompt and selecting **Finalize**, export the exact downstream
+projection:
+
+```bash
+promptimal export prompt-sheet.json \
+  --finalized \
+  --output finalized-prompts.json
+```
+
+Or load finalized definitions directly:
+
+```python
+from promptimal import PromptSheet
+
+sheet = PromptSheet.load("prompt-sheet.json")
+for prompt in sheet.finalized_prompts():
+    print(prompt.prompt_id, prompt.prompt_template)
+```
+
+Stored observations can also be projected into a reproducible model/prompt
+capability matrix:
+
+```bash
+promptimal capabilities prompt-sheet.json \
+  --output capability-matrix.json \
+  --cost-ceiling 0.002
+```
+
+The complete data and behavior contract is in the
+[Prompt Refinement Workbench specification](./docs/Promptimal-Prompt-Refinement-Workbench-Specification.md).
+
+## Legacy single-prompt quickstart
 
 Open the tool from your terminal:
 
@@ -42,7 +117,7 @@ You'll be asked to input your initial prompt and what you want to improve. Alter
     --model "openai/gpt-4o"
 ```
 
-Once you're done, a UI will open in your terminal for monitoring the optimization process:
+Once you're done, a UI will open in your terminal for monitoring the legacy optimization process:
 
 <img src="./assets/demo.png" width="720" />
 
