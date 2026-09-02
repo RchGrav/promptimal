@@ -6,11 +6,13 @@ name = "pypi"
 [packages]
 openai = "*"
 json-repair = "*"
+jsonschema = ">=4.18"
 urwid = "*"
 pyperclip = "*"
 prompt-toolkit = "*"
 
 [dev-packages]
+pytest = "*"
 
 [requires]
 python_version = "3.13"

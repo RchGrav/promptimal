@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+include promptimal/sheet/prompt-sheet.schema.json
+recursive-include docs *.md
+recursive-include examples *.json

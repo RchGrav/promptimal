@@ -1,0 +1,269 @@
+{
+  "format": "promptimal.prompt-sheet",
+  "format_version": "1.0.0",
+  "sheet_id": "vivi.prompt-operations",
+  "title": "Vivi inference-operation prompt sheet",
+  "description": "Illustrative Promptimal prompt sheet containing one reusable namespace-alias inference operation.",
+  "source": {
+    "type": "written_specification",
+    "reference": "Vivi technical specification",
+    "revision": null,
+    "extracted_at": "2026-09-02T00:00:00Z"
+  },
+  "default_execution_profile_id": "frontier-core",
+  "execution_profiles": [
+    {
+      "id": "frontier-core",
+      "label": "Core frontier models",
+      "description": "Illustrative profile. Replace the model slugs with the current OpenRouter targets chosen for the project.",
+      "runs_per_case": 5,
+      "max_concurrency": 8,
+      "timeout_seconds": 120,
+      "max_transport_retries": 0,
+      "targets": [
+        {
+          "id": "frontier-a",
+          "label": "Frontier model A",
+          "adapter": "openrouter-chat-completions",
+          "model": "provider/model-a",
+          "enabled": true,
+          "parameters": {
+            "temperature": 0
+          },
+          "provider_routing": {}
+        },
+        {
+          "id": "frontier-b",
+          "label": "Frontier model B",
+          "adapter": "openrouter-chat-completions",
+          "model": "provider/model-b",
+          "enabled": true,
+          "parameters": {
+            "temperature": 0
+          },
+          "provider_routing": {}
+        }
+      ]
+    }
+  ],
+  "prompts": [
+    {
+      "id": "namespace.aliases",
+      "intent": "Infer only the most common aliases that another agent may use for the identifier portion of an existing namespace object, excluding the canonical identifier itself and excluding variants.",
+      "source_references": [
+        "Vivi namespace alias inference operation"
+      ],
+      "state": "unreviewed",
+      "current_revision_id": "namespace.aliases.r0001",
+      "finalization": null,
+      "finalization_history": [],
+      "variables": [
+        {
+          "name": "name",
+          "description": "Human-readable name of the existing object.",
+          "required": true,
+          "value_schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "description",
+          "description": "Description of the existing object.",
+          "required": true,
+          "value_schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "namespace",
+          "description": "Complete current namespace reference.",
+          "required": true,
+          "value_schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "identifier",
+          "description": "Canonical identifier whose aliases are being inferred.",
+          "required": true,
+          "value_schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "prefix",
+          "description": "Namespace prefix that precedes the identifier.",
+          "required": true,
+          "value_schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "test_cases": [
+        {
+          "id": "cplusplus",
+          "label": "C++",
+          "description": "Alias inference for the C++ namespace object.",
+          "values": {
+            "name": "C++",
+            "description": "a high-performance, general-purpose programming language that extends C with object-oriented and generic programming features",
+            "namespace": "code.cplusplus",
+            "identifier": "cplusplus",
+            "prefix": "code"
+          },
+          "intended_response": {
+            "kind": "exact",
+            "description": "For this illustrative reviewed case, the accepted unordered response contains the two listed aliases and no other values.",
+            "value": [
+              "c++",
+              "cpp"
+            ],
+            "provenance": {
+              "kind": "human_review",
+              "reference": "Illustrative example acceptance data",
+              "note": "The values demonstrate the exact-response representation; they are not asserted as source-specification text."
+            }
+          }
+        },
+        {
+          "id": "javascript",
+          "label": "JavaScript",
+          "description": "Alias inference for the JavaScript namespace object.",
+          "values": {
+            "name": "JavaScript",
+            "description": "a high-level programming language used for interactive web applications and server-side software",
+            "namespace": "code.javascript",
+            "identifier": "javascript",
+            "prefix": "code"
+          },
+          "intended_response": {
+            "kind": "exact",
+            "description": "For this illustrative reviewed case, the accepted response contains only the listed alias.",
+            "value": [
+              "js"
+            ],
+            "provenance": {
+              "kind": "human_review",
+              "reference": "Illustrative example acceptance data",
+              "note": "The value demonstrates the exact-response representation."
+            }
+          }
+        },
+        {
+          "id": "postgresql",
+          "label": "PostgreSQL",
+          "description": "Alias inference for the PostgreSQL namespace object.",
+          "values": {
+            "name": "PostgreSQL",
+            "description": "an open-source object-relational database management system",
+            "namespace": "code.postgresql",
+            "identifier": "postgresql",
+            "prefix": "code"
+          },
+          "intended_response": {
+            "kind": "exact",
+            "description": "For this illustrative reviewed case, the accepted unordered response contains the two listed aliases and no other values.",
+            "value": [
+              "postgres",
+              "pgsql"
+            ],
+            "provenance": {
+              "kind": "human_review",
+              "reference": "Illustrative example acceptance data",
+              "note": "The values demonstrate the exact-response representation."
+            }
+          }
+        }
+      ],
+      "output_contract": {
+        "description": "Return a JSON array containing strings and no surrounding prose.",
+        "media_type": "application/json",
+        "display_shape": "string[]",
+        "schema": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "presentation_constraints": [
+          "Return the JSON array only.",
+          "Do not wrap the response in a Markdown code fence."
+        ]
+      },
+      "behavioral_requirements": [
+        {
+          "id": "common-aliases-only",
+          "text": "Include only the most common aliases.",
+          "provenance": {
+            "kind": "specification",
+            "reference": "Vivi namespace alias inference operation",
+            "note": null
+          }
+        },
+        {
+          "id": "exclude-variants",
+          "text": "Do not return variants as aliases.",
+          "provenance": {
+            "kind": "specification",
+            "reference": "Vivi namespace alias inference operation",
+            "note": null
+          }
+        },
+        {
+          "id": "exclude-canonical-identifier",
+          "text": "Exclude the canonical identifier value supplied by {identifier}.",
+          "provenance": {
+            "kind": "specification",
+            "reference": "Vivi namespace alias inference operation",
+            "note": null
+          },
+          "check": {
+            "type": "json_array_excludes_expanded_exact_string",
+            "parameters": {
+              "template": "{identifier}"
+            }
+          }
+        }
+      ],
+      "evaluation_plan": {
+        "normalizer": {
+          "type": "json_string_array_unordered",
+          "parameters": {
+            "case_sensitive": true,
+            "preserve_duplicates": true
+          }
+        },
+        "task": {
+          "method": "unordered_exact_match",
+          "parameters": {
+            "case_sensitive": true,
+            "preserve_duplicates": true
+          },
+          "evaluator_profile_id": null
+        },
+        "similarity": {
+          "method": "normalized_equality",
+          "parameters": {}
+        }
+      },
+      "revisions": [
+        {
+          "id": "namespace.aliases.r0001",
+          "sequence": 1,
+          "parent_revision_id": null,
+          "prompt_template": "In our knowledge graph there is an object for \"{name}\" described as \"{description}\" that is currently referenced in the namespace as \"{namespace}\". As an agent, infer only the most common aliases for \"{identifier}\" without variants that other agents will use to match this object for the text following \"{prefix}.\". Output: string[] only while excluding \"{identifier}\".",
+          "origin": {
+            "kind": "extracted",
+            "source_candidate_id": null,
+            "note": "Initial prompt produced by the specification extraction pass."
+          },
+          "created_at": "2026-09-02T00:00:00Z"
+        }
+      ]
+    }
+  ],
+  "result_sets": [],
+  "evolution_runs": [],
+  "updated_at": "2026-09-02T00:00:00Z"
+}

@@ -1,8 +1,4 @@
-# Local
-try:
-    from promptimal import main
-except ImportError:
-    from . import main
+from promptimal.promptimal import main
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

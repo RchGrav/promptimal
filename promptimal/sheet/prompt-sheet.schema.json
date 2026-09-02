@@ -1,0 +1,1323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Promptimal Prompt Sheet",
+  "description": "Machine-readable inference-operation definitions, prompt revisions, execution observations, and evolutionary candidates for the Promptimal refinement workbench.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "format_version",
+    "sheet_id",
+    "title",
+    "source",
+    "execution_profiles",
+    "prompts",
+    "result_sets",
+    "evolution_runs",
+    "updated_at"
+  ],
+  "properties": {
+    "format": {
+      "const": "promptimal.prompt-sheet"
+    },
+    "format_version": {
+      "const": "1.0.0"
+    },
+    "sheet_id": {
+      "$ref": "#/$defs/id"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "default_execution_profile_id": {
+      "type": ["string", "null"]
+    },
+    "execution_profiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/executionProfile"
+      }
+    },
+    "prompts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/promptRecord"
+      }
+    },
+    "result_sets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resultSet"
+      }
+    },
+    "evolution_runs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evolutionRun"
+      }
+    },
+    "updated_at": {
+      "$ref": "#/$defs/timestamp"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "reference", "extracted_at"],
+      "properties": {
+        "type": {
+          "const": "written_specification"
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": ["string", "null"]
+        },
+        "extracted_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "modelTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "adapter",
+        "model",
+        "enabled",
+        "parameters",
+        "provider_routing"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adapter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "provider_routing": {
+          "type": "object"
+        },
+        "catalog_metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "executionProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "runs_per_case",
+        "max_concurrency",
+        "timeout_seconds",
+        "max_transport_retries",
+        "targets"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "runs_per_case": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timeout_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "max_transport_retries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/modelTarget"
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "specification",
+            "specification_example",
+            "extraction_inference",
+            "human_review"
+          ]
+        },
+        "reference": {
+          "type": ["string", "null"]
+        },
+        "note": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "variableDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description", "required", "value_schema"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "description": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "value_schema": {
+          "type": "object"
+        }
+      }
+    },
+    "intendedResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "description", "provenance"],
+      "properties": {
+        "kind": {
+          "enum": ["exact", "representative", "criteria"]
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": true,
+        "criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": ["exact", "representative"]
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["value"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "criteria"
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "required": ["criteria"]
+          }
+        }
+      ]
+    },
+    "testCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "values", "intended_response"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "values": {
+          "type": "object"
+        },
+        "intended_response": {
+          "$ref": "#/$defs/intendedResponse"
+        }
+      }
+    },
+    "outputContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "media_type",
+        "display_shape",
+        "schema",
+        "presentation_constraints"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_shape": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema": {
+          "type": "object"
+        },
+        "presentation_constraints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "requirementCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "parameters"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "type": "object"
+        }
+      }
+    },
+    "behavioralRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text", "provenance"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "check": {
+          "$ref": "#/$defs/requirementCheck"
+        }
+      }
+    },
+    "normalizer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "parameters"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "type": "object"
+        }
+      }
+    },
+    "taskEvaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "parameters"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "evaluator_profile_id": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "similarityEvaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "parameters"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "type": "object"
+        }
+      }
+    },
+    "evaluationPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["normalizer", "task", "similarity"],
+      "properties": {
+        "normalizer": {
+          "$ref": "#/$defs/normalizer"
+        },
+        "task": {
+          "$ref": "#/$defs/taskEvaluator"
+        },
+        "similarity": {
+          "$ref": "#/$defs/similarityEvaluator"
+        }
+      }
+    },
+    "revisionOrigin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "extracted",
+            "manual",
+            "candidate_adoption",
+            "restored",
+            "imported"
+          ]
+        },
+        "source_candidate_id": {
+          "type": ["string", "null"]
+        },
+        "note": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "promptRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sequence",
+        "parent_revision_id",
+        "prompt_template",
+        "origin",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "parent_revision_id": {
+          "type": ["string", "null"]
+        },
+        "prompt_template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "origin": {
+          "$ref": "#/$defs/revisionOrigin"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "finalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision_id", "finalized_at"],
+      "properties": {
+        "revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "finalized_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "note": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "promptRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "intent",
+        "source_references",
+        "state",
+        "current_revision_id",
+        "finalization",
+        "finalization_history",
+        "variables",
+        "test_cases",
+        "output_contract",
+        "behavioral_requirements",
+        "evaluation_plan",
+        "revisions"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "intent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_references": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "state": {
+          "enum": ["unreviewed", "in_refinement", "tested", "finalized"]
+        },
+        "current_revision_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "finalization": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/finalization"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "finalization_history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finalization"
+          }
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variableDefinition"
+          }
+        },
+        "test_cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/testCase"
+          }
+        },
+        "output_contract": {
+          "$ref": "#/$defs/outputContract"
+        },
+        "behavioral_requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/behavioralRequirement"
+          }
+        },
+        "evaluation_plan": {
+          "$ref": "#/$defs/evaluationPlan"
+        },
+        "revisions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/promptRevision"
+          }
+        }
+      }
+    },
+    "operationSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intent",
+        "variables",
+        "test_cases",
+        "output_contract",
+        "behavioral_requirements",
+        "evaluation_plan"
+      ],
+      "properties": {
+        "intent": {
+          "type": "string",
+          "minLength": 1
+        },
+        "variables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variableDefinition"
+          }
+        },
+        "test_cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/testCase"
+          }
+        },
+        "output_contract": {
+          "$ref": "#/$defs/outputContract"
+        },
+        "behavioral_requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/behavioralRequirement"
+          }
+        },
+        "evaluation_plan": {
+          "$ref": "#/$defs/evaluationPlan"
+        }
+      }
+    },
+    "requestSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "expanded_prompt", "messages", "parameters", "provider_routing"],
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "expanded_prompt": {
+          "type": ["string", "null"]
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "parameters": {
+          "type": "object"
+        },
+        "provider_routing": {
+          "type": "object"
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["prompt_tokens", "completion_tokens", "total_tokens"],
+      "properties": {
+        "prompt_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "completion_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost": {
+          "type": ["number", "null"],
+          "minimum": 0
+        }
+      }
+    },
+    "transportAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt", "started_at", "completed_at", "status", "error"],
+      "properties": {
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "completed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "status": {
+          "enum": ["ok", "api_error", "timeout"]
+        },
+        "error": {
+          "type": ["object", "null"]
+        }
+      }
+    },
+    "executionResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "raw_output",
+        "parsed_output",
+        "response_id",
+        "returned_model",
+        "provider",
+        "finish_reason",
+        "native_finish_reason",
+        "usage",
+        "latency_ms",
+        "error"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "ok",
+            "api_error",
+            "timeout",
+            "expansion_error",
+            "cancelled"
+          ]
+        },
+        "raw_output": {
+          "type": ["string", "null"]
+        },
+        "parsed_output": true,
+        "response_id": {
+          "type": ["string", "null"]
+        },
+        "returned_model": {
+          "type": ["string", "null"]
+        },
+        "provider": {
+          "type": ["string", "null"]
+        },
+        "finish_reason": {
+          "type": ["string", "null"]
+        },
+        "native_finish_reason": {
+          "type": ["string", "null"]
+        },
+        "usage": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/usage"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "latency_ms": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "error": {
+          "type": ["object", "null"]
+        },
+        "transport_attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/transportAttempt"
+          }
+        }
+      }
+    },
+    "checkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "details"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": ["pass", "fail", "unknown", "not_run"]
+        },
+        "details": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "taskResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "score", "method", "details", "provenance"],
+      "properties": {
+        "status": {
+          "enum": ["pass", "fail", "unknown", "not_run"]
+        },
+        "score": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "method": {
+          "type": "string"
+        },
+        "details": {
+          "type": ["string", "null"]
+        },
+        "provenance": {
+          "enum": ["deterministic", "semantic_evaluator", "human", "none"]
+        }
+      }
+    },
+    "evaluationObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "evaluator_target_id",
+        "recorded_at",
+        "request",
+        "response",
+        "requirement_results",
+        "task_result"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": ["semantic_evaluator", "human"]
+        },
+        "evaluator_target_id": {
+          "type": ["string", "null"]
+        },
+        "recorded_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "request": {
+          "type": ["object", "null"]
+        },
+        "response": {
+          "type": ["object", "null"]
+        },
+        "requirement_results": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/checkResult"
+          }
+        },
+        "task_result": {
+          "$ref": "#/$defs/taskResult"
+        }
+      }
+    },
+    "executionEvaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract",
+        "requirements",
+        "task",
+        "observations",
+        "normalized_output",
+        "failure_tags"
+      ],
+      "properties": {
+        "contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "checks"],
+          "properties": {
+            "status": {
+              "enum": ["pass", "fail", "not_run"]
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/checkResult"
+              }
+            }
+          }
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/checkResult"
+          }
+        },
+        "task": {
+          "$ref": "#/$defs/taskResult"
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evaluationObservation"
+          }
+        },
+        "normalized_output": true,
+        "failure_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "executionRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "test_case_id",
+        "target_id",
+        "trial",
+        "request",
+        "response",
+        "evaluation"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "test_case_id": {
+          "type": "string"
+        },
+        "target_id": {
+          "type": "string"
+        },
+        "trial": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "request": {
+          "$ref": "#/$defs/requestSnapshot"
+        },
+        "response": {
+          "$ref": "#/$defs/executionResponse"
+        },
+        "evaluation": {
+          "$ref": "#/$defs/executionEvaluation"
+        }
+      }
+    },
+    "metricSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_executions",
+        "evaluation_coverage",
+        "task_success_rate",
+        "contract_compliance_rate",
+        "full_pass_rate",
+        "within_model_repeatability",
+        "cross_model_agreement"
+      ],
+      "properties": {
+        "total_executions": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evaluation_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "execution_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "task_success_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "contract_compliance_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "full_pass_rate": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "within_model_repeatability": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "cross_model_agreement": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "cellSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_id", "test_case_id", "metrics"],
+      "properties": {
+        "target_id": {
+          "type": "string"
+        },
+        "test_case_id": {
+          "type": "string"
+        },
+        "metrics": {
+          "$ref": "#/$defs/metricSet"
+        }
+      }
+    },
+    "failureCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tag", "count"],
+      "properties": {
+        "tag": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "resultSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metrics",
+        "worst_cells",
+        "failure_distribution",
+        "per_target",
+        "per_case"
+      ],
+      "properties": {
+        "metrics": {
+          "$ref": "#/$defs/metricSet"
+        },
+        "worst_cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cellSummary"
+          }
+        },
+        "failure_distribution": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/failureCount"
+          }
+        },
+        "per_target": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["target_id", "metrics"],
+            "properties": {
+              "target_id": {
+                "type": "string"
+              },
+              "metrics": {
+                "$ref": "#/$defs/metricSet"
+              }
+            }
+          }
+        },
+        "per_case": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["test_case_id", "metrics"],
+            "properties": {
+              "test_case_id": {
+                "type": "string"
+              },
+              "metrics": {
+                "$ref": "#/$defs/metricSet"
+              }
+            }
+          }
+        }
+      }
+    },
+    "resultSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "prompt_id",
+        "revision_id",
+        "execution_profile_id",
+        "operation_snapshot",
+        "status",
+        "started_at",
+        "completed_at",
+        "runs_per_case",
+        "targets",
+        "executions",
+        "summary"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "prompt_id": {
+          "type": "string"
+        },
+        "revision_id": {
+          "type": "string"
+        },
+        "execution_profile_id": {
+          "type": "string"
+        },
+        "execution_profile_snapshot": {
+          "$ref": "#/$defs/executionProfile"
+        },
+        "operation_snapshot": {
+          "$ref": "#/$defs/operationSnapshot"
+        },
+        "status": {
+          "enum": ["running", "completed", "cancelled", "failed"]
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "completed_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "runs_per_case": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/modelTarget"
+          }
+        },
+        "executions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/executionRecord"
+          }
+        },
+        "summary": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/resultSummary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "evolutionCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "parent_candidate_ids",
+        "prompt_template",
+        "status",
+        "generation_error",
+        "result_set_id",
+        "ranking"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "parent_candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "prompt_template": {
+          "type": ["string", "null"]
+        },
+        "status": {
+          "enum": [
+            "generated",
+            "generation_error",
+            "not_executable",
+            "tested",
+            "cancelled"
+          ]
+        },
+        "generation_error": {
+          "type": ["object", "null"]
+        },
+        "result_set_id": {
+          "type": ["string", "null"]
+        },
+        "ranking": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/metricSet"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "evolutionGeneration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "candidates"],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evolutionCandidate"
+          }
+        }
+      }
+    },
+    "evolutionRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "prompt_id",
+        "parent_revision_id",
+        "execution_profile_id",
+        "mutator_target",
+        "population_size",
+        "generation_limit",
+        "status",
+        "started_at",
+        "completed_at",
+        "generations",
+        "selected_candidate_id",
+        "adopted_revision_id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "prompt_id": {
+          "type": "string"
+        },
+        "parent_revision_id": {
+          "type": "string"
+        },
+        "execution_profile_id": {
+          "type": "string"
+        },
+        "mutator_target": {
+          "$ref": "#/$defs/modelTarget"
+        },
+        "population_size": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "generation_limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "enum": ["running", "completed", "cancelled", "rejected"]
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "completed_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "generations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evolutionGeneration"
+          }
+        },
+        "selected_candidate_id": {
+          "type": ["string", "null"]
+        },
+        "adopted_revision_id": {
+          "type": ["string", "null"]
+        }
+      }
+    }
+  }
+}
