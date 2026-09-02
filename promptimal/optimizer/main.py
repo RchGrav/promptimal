@@ -26,6 +26,10 @@ except ImportError:
     from dtos import ProgressStep, PromptCandidate, TokenCount
 
 
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_MODEL = "openai/gpt-4o"
+
+
 async def optimize(
     prompt: str,  # First version of the prompt
     improvement_request: Optional[str] = None,  # Description of what to improve
@@ -34,10 +38,15 @@ async def optimize(
     num_elites: int = 2,  # No. of top candidates to pass onto the next generation
     threshold: float = 1.0,
     api_key: str = "",
+    model: Optional[str] = None,
     evaluator: Optional[callable] = None,
 ):
     evaluate = evaluate_fitness if not evaluator else evaluator
-    openai = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY", api_key))
+    model = model or os.getenv("OPENROUTER_MODEL") or DEFAULT_MODEL
+    client = AsyncOpenAI(
+        api_key=api_key or os.getenv("OPENROUTER_API_KEY"),
+        base_url=OPENROUTER_BASE_URL,
+    )
     start_time = time.time()
 
     best_candidate = initial_prompt = PromptCandidate(prompt)
@@ -53,7 +62,7 @@ async def optimize(
     )
 
     population, _token_count = await init_population(
-        prompt, improvement_request, population_size, openai
+        prompt, improvement_request, population_size, client, model
     )
     token_count += _token_count
     num_prompts = 0
@@ -68,7 +77,7 @@ async def optimize(
     )
 
     tasks = [
-        evaluate(candidate, improvement_request, initial_prompt, openai)
+        evaluate(candidate, initial_prompt, improvement_request, client, model)
         for candidate in population
     ]
     for index, task in enumerate(asyncio.as_completed(tasks)):
@@ -107,7 +116,7 @@ async def optimize(
 
         # Evaluate fitness of each candidate
         tasks = [
-            evaluate(candidate, initial_prompt, improvement_request, openai)
+            evaluate(candidate, initial_prompt, improvement_request, client, model)
             for candidate in population
         ]
         for i, task in enumerate(asyncio.as_completed(tasks)):
@@ -162,7 +171,8 @@ async def optimize(
                 *parents,
                 initial_prompt=prompt,
                 improvement_request=improvement_request,
-                openai=openai,
+                client=client,
+                model=model,
             )
             for parents in mates
         ]
