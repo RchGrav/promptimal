@@ -1,5 +1,5 @@
 # Standard library
-import json
+import asyncio
 import random
 from statistics import mean
 from typing import List, Tuple
@@ -26,7 +26,11 @@ except ImportError:
 
 
 async def init_population(
-    prompt: str, improvement_request: str, population_size: int, openai: AsyncOpenAI
+    prompt: str,
+    improvement_request: str,
+    population_size: int,
+    client: AsyncOpenAI,
+    model: str,
 ) -> Tuple[List[PromptCandidate], TokenCount]:
     """
     Initializes a population of candidate prompts.
@@ -42,9 +46,9 @@ async def init_population(
         "role": "user",
         "content": f"Generate {population_size} better versions of the following prompt:\n\n<prompt>\n{prompt}\n</prompt>",
     }
-    response = await openai.chat.completions.create(
+    response = await client.chat.completions.create(
         messages=[system_message, user_message],
-        model="gpt-4o",
+        model=model,
         temperature=1.0,
         response_format={
             "type": "json_schema",
@@ -73,16 +77,15 @@ async def init_population(
     population = [PromptCandidate(prompt) for prompt in output["prompts"]]
     population = [PromptCandidate(prompt)] + population  # Add initial prompt
 
-    return population, TokenCount(
-        response.usage.prompt_tokens, response.usage.completion_tokens
-    )
+    return population, _get_token_count(response)
 
 
 async def evaluate_fitness(
     candidate: PromptCandidate,
     initial_prompt: PromptCandidate,
     improvement_request: str,
-    openai: AsyncOpenAI,
+    client: AsyncOpenAI,
+    model: str,
     num_samples=5,
 ) -> Tuple[PromptCandidate, TokenCount]:
     """
@@ -94,8 +97,8 @@ async def evaluate_fitness(
         return candidate, TokenCount(0, 0)
 
     # Generate `n_samples` self-evaluations
-    response = await openai.chat.completions.create(
-        messages=[
+    request = {
+        "messages": [
             {
                 "role": "system",
                 "content": EVAL_PROMPT.format(
@@ -103,24 +106,14 @@ async def evaluate_fitness(
                     improvement_request=improvement_request,
                 ),
             },
-            # {"role": "user", "content": initial_prompt.prompt},
-            # {
-            #     "role": "assistant",
-            #     "content": json.dumps(
-            #         {
-            #             "evaluation": initial_prompt.reflection,
-            #             "score": initial_prompt.fitness,
-            #         }
-            #     ),
-            # },
             {
                 "role": "user",
                 "content": f"Evaluate the following prompt:\n\n<prompt>\n{candidate.prompt}\n</prompt>",
             },
         ],
-        model="gpt-4o",
-        temperature=1.0,
-        response_format={
+        "model": model,
+        "temperature": 1.0,
+        "response_format": {
             "type": "json_schema",
             "json_schema": {
                 "name": "evaluation",
@@ -142,18 +135,24 @@ async def evaluate_fitness(
                 },
             },
         },
-        n=num_samples,
+    }
+    responses = await asyncio.gather(
+        *(client.chat.completions.create(**request) for _ in range(num_samples))
     )
-    outputs = (choice.message.content for choice in response.choices)
-    outputs = [json_repair.loads(output) for output in outputs]
+    outputs = [
+        json_repair.loads(response.choices[0].message.content)
+        for response in responses
+    ]
 
     # Consolidate results
     candidate.fitness = mean(output["score"] for output in outputs) / 10
     candidate.reflection = outputs[0]["evaluation"]  # 1st evaluation is best
 
-    return candidate, TokenCount(
-        response.usage.prompt_tokens, response.usage.completion_tokens
-    )
+    token_count = TokenCount(0, 0)
+    for response in responses:
+        token_count += _get_token_count(response)
+
+    return candidate, token_count
 
 
 def select_parent(
@@ -168,7 +167,8 @@ async def crossover(
     parent2: PromptCandidate,
     initial_prompt: str,
     improvement_request: str,
-    openai: AsyncOpenAI,
+    client: AsyncOpenAI,
+    model: str,
 ) -> Tuple[PromptCandidate, TokenCount]:
     system_message = {
         "role": "system",
@@ -180,9 +180,9 @@ async def crossover(
         "role": "user",
         "content": f"Combine the following prompts into a better one:\n\n<prompt_1>\n{parent1.prompt}\n</prompt_1>\n\n<prompt_2>\n{parent2.prompt}\n</prompt_2>",
     }
-    response = await openai.chat.completions.create(
+    response = await client.chat.completions.create(
         messages=[system_message, user_message],
-        model="gpt-4o",
+        model=model,
         temperature=1.0,
         response_format={
             "type": "json_schema",
@@ -209,6 +209,20 @@ async def crossover(
     )
     output = json_repair.loads(response.choices[0].message.content)
 
-    return PromptCandidate(output["prompt"]), TokenCount(
-        response.usage.prompt_tokens, response.usage.completion_tokens
+    return PromptCandidate(output["prompt"]), _get_token_count(response)
+
+
+def _get_token_count(response) -> TokenCount:
+    usage = response.usage
+    if not usage:
+        return TokenCount(0, 0)
+
+    cost = getattr(usage, "cost", None)
+    if cost is None:
+        cost = (getattr(usage, "model_extra", None) or {}).get("cost", 0.0)
+
+    return TokenCount(
+        usage.prompt_tokens or 0,
+        usage.completion_tokens or 0,
+        float(cost or 0.0),
     )

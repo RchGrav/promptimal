@@ -274,7 +274,7 @@ class Footer:
         input_toks = step.token_count.input if step.token_count else 0
         output_toks = step.token_count.output if step.token_count else 0
         num_tokens = input_toks + output_toks
-        cost = (input_toks * (2.50 / 1000000)) + (output_toks * (10.0 / 1000000))
+        cost = step.token_count.cost if step.token_count else 0.0
 
         return [
             ("tertiary", f"{step.num_prompts} prompts evaluated"),

@@ -85,11 +85,18 @@ def main():
         help="Score threshold to stop the optimization loop.",
     )
     parser.add_argument(
-        "--openai_api_key",
+        "--openrouter_api_key",
         default="",
         required=False,
         type=str,
-        help="OpenAI API key.",
+        help="OpenRouter API key.",
+    )
+    parser.add_argument(
+        "--model",
+        default=None,
+        required=False,
+        type=str,
+        help="OpenRouter model slug. Defaults to OPENROUTER_MODEL or openai/gpt-4o.",
     )
     parser.add_argument(
         "--evaluator",
@@ -100,8 +107,9 @@ def main():
     )
     args = parser.parse_args()
 
-    if not os.getenv("OPENAI_API_KEY", None) or args.openai_api_key:
-        print("\033[1;31mOpenAI API key not found.\033[0m")
+    api_key = args.openrouter_api_key or os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        print("\033[1;31mOpenRouter API key not found.\033[0m")
         return
 
     init_prompt = (
@@ -121,7 +129,8 @@ def main():
         num_iters=args.num_iters,
         population_size=args.num_samples,
         threshold=args.threshold,
-        api_key=args.openai_api_key,
+        api_key=api_key,
+        model=args.model,
         evaluator=generate_evaluator(args.evaluator),
     )
 

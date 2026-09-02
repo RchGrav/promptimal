@@ -19,7 +19,7 @@ setup(
     url="https://github.com/shobrook/promptimal",
     author="shobrook",
     author_email="shobrookj@gmail.com",
-    keywords="prompt optimizer openai prompt-tuning prompt-engineering prompt-optimization genetic-algorithms",
+    keywords="prompt optimizer openrouter prompt-tuning prompt-engineering prompt-optimization genetic-algorithms",
     include_package_data=True,
     packages=find_packages(),
     entry_points={"console_scripts": ["promptimal = promptimal.promptimal:main"]},

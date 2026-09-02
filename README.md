@@ -1,6 +1,6 @@
 # promptimal
 
-**CLI for quickly improving your AI prompts. No dataset needed.**
+**CLI for quickly improving your AI prompts through OpenRouter. No dataset needed.**
 
 Just submit your prompt and a description of what you want to improve. Promptimal will then use a genetic algorithm to iteratively refine the prompt until it's better than the original. An LLM evaluates the modified prompts to guide the process, but you can also define your own evaluation function.
 
@@ -12,10 +12,17 @@ Just submit your prompt and a description of what you want to improve. Promptima
 > pipx install promptimal
 ```
 
-Once installed, make sure you have your OpenAI API key added to your environment:
+Once installed, add your OpenRouter API key to your environment:
 
 ```bash
-> export OPENAI_API_KEY="..."
+> export OPENROUTER_API_KEY="..."
+```
+
+Promptimal uses `openai/gpt-4o` by default. Set another OpenRouter model slug with
+`OPENROUTER_MODEL` or `--model`. The selected model must support structured outputs.
+
+```bash
+> export OPENROUTER_MODEL="openai/gpt-4o"
 ```
 
 ## Quickstart
@@ -31,7 +38,8 @@ You'll be asked to input your initial prompt and what you want to improve. Alter
 ```bash
 > promptimal \
     --prompt "You will be provided with a piece of code, and your task is to explain it in a concise way." \
-    --improve "Summaries need to include less code references and be more high-level."
+    --improve "Summaries need to include less code references and be more high-level." \
+    --model "openai/gpt-4o"
 ```
 
 Once you're done, a UI will open in your terminal for monitoring the optimization process:
@@ -85,7 +93,6 @@ This file will effectively serve as a script that promptimal uses to evaluate pr
 
 ## Roadmap
 
-1. Support for other LLM providers, like Anthropic, Groq, etc. And ollama for local models.
-2. Evolve not only the prompts, but the meta-prompts (based on the [PromptBreeder paper](https://arxiv.org/pdf/2309.16797)).
-3. Pre-define some mutation operators.
-4. Generate synthetic tests as part of the evaluation process.
+1. Evolve not only the prompts, but the meta-prompts (based on the [PromptBreeder paper](https://arxiv.org/pdf/2309.16797)).
+2. Pre-define some mutation operators.
+3. Generate synthetic tests as part of the evaluation process.
