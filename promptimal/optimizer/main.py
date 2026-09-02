@@ -77,7 +77,7 @@ async def optimize(
     )
 
     tasks = [
-        evaluate(candidate, improvement_request, initial_prompt, client, model)
+        evaluate(candidate, initial_prompt, improvement_request, client, model)
         for candidate in population
     ]
     for index, task in enumerate(asyncio.as_completed(tasks)):
